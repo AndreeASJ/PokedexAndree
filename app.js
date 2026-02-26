@@ -197,8 +197,10 @@ function hideError() {
   el.error.classList.add('hidden');
 }
 
-const FIRST_PAGE_SIZE = 300;
-const FETCH_TIMEOUT_MS = 12000;
+const FIRST_PAGE_SIZE = 2000;
+const FETCH_TIMEOUT_MS = 20000;
+const NATIONAL_DEX_MAX = 1025;
+const GAP_LIST_URL = 'data/gap-pokemon.json';
 
 function parsePageResults(data) {
   const out = [];
@@ -218,7 +220,7 @@ async function fetchOnePage(url) {
   return res.json();
 }
 
-/** Load first page only. */
+/** Load first page (large limit to get full list in one request). */
 async function fetchFirstBatch() {
   const url = `${POKE_API}/pokemon?limit=${FIRST_PAGE_SIZE}`;
   const data = await fetchOnePage(url);
@@ -238,6 +240,41 @@ async function fetchAllRemaining(nextUrl) {
       break;
     }
   }
+}
+
+/** Load gap Pokémon (not in API) from static JSON. Returns [] on failure. */
+async function loadGapList() {
+  try {
+    const res = await fetch(GAP_LIST_URL);
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!Array.isArray(json)) return [];
+    return json.map((entry) => ({
+      id: String(entry.id),
+      name: entry.name || 'Unknown',
+      url: null,
+      gap: true,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** Filter to National Dex (1–1025), merge with gap list, sort by id. */
+async function mergeWithGapList(apiList) {
+  const byId = new Map();
+  for (const p of apiList) {
+    const n = Number(p.id);
+    if (n >= 1 && n <= NATIONAL_DEX_MAX && !byId.has(p.id)) byId.set(p.id, { ...p, gap: false });
+  }
+  const gapList = await loadGapList();
+  for (const g of gapList) {
+    const id = String(g.id);
+    if (Number(id) >= 1 && Number(id) <= NATIONAL_DEX_MAX && !byId.has(id)) byId.set(id, g);
+  }
+  return Array.from(byId.entries())
+    .map(([, p]) => p)
+    .sort((a, b) => Number(a.id) - Number(b.id));
 }
 
 function getFilteredList() {
@@ -472,6 +509,26 @@ function flattenEvolutionChain(chain) {
 }
 
 async function openDetail(id) {
+  const listEntry = state.list.find((p) => String(p.id) === String(id));
+  if (listEntry?.gap) {
+    const n = Number(id);
+    const tags = [];
+    if (LEGENDARY_IDS.has(n)) tags.push('Legendary');
+    if (MYTHICAL_IDS.has(n)) tags.push('Mythical');
+    if (PSEUDO_LEGENDARY_IDS.has(n)) tags.push('Pseudolegendary');
+    const tagLine = tags.length ? ` · ${tags.join(', ')}` : '';
+    el.modalContent.innerHTML = `
+      <div class="modal-title-row">
+        <div class="modal-info">
+          <h2 id="modal-title">${escapeHtml(listEntry.name)}</h2>
+          <p class="modal-meta">#${String(id).padStart(3, '0')}${tagLine}</p>
+          <p class="modal-empty-text">No detailed data from API for this Pokémon.</p>
+        </div>
+      </div>`;
+    el.modal?.classList.add('open');
+    return;
+  }
+
   let data = state.details.get(id);
   if (!data) {
     try {
@@ -984,6 +1041,7 @@ async function init() {
     const { list, next } = await fetchFirstBatch();
     state.list = list;
     if (next) await fetchAllRemaining(next);
+    state.list = await mergeWithGapList(state.list);
     el.loading.classList.add('hidden');
     renderGrid();
     initSearchMode();
