@@ -13,11 +13,14 @@
   <div class="app">
     <header class="header">
       <div class="header-inner">
+        <nav class="nav" aria-label="Main">
+          <a href="#/" class="nav-link nav-link-pokedex active">Pokédex</a>
+        </nav>
         <h1 class="logo">
-          <span class="logo-icon">◆</span> Pokédex
+          <span class="logo-icon">◆</span> <span id="page-title">Pokédex</span>
         </h1>
-        <p class="tagline">Explore every Pokémon</p>
-        <div class="search-wrap">
+        <p class="tagline" id="page-tagline">Explore every Pokémon</p>
+        <div class="search-wrap" id="pokedex-search-wrap">
           <input
             type="search"
             id="search"
@@ -42,13 +45,13 @@
             </svg>
           </button>
         </div>
-        <div class="stats" aria-live="polite">
+        <div class="stats" aria-live="polite" id="header-stats">
           <span id="count">—</span> Pokémon
         </div>
       </div>
     </header>
 
-    <main class="main">
+    <main class="main" id="pokedex-main">
       <div id="loading" class="loading" role="status">
         <div class="loader"></div>
         <p>Loading Pokémon…</p>

@@ -44,6 +44,11 @@ const el = {
   modalContent: document.getElementById('modal-content'),
   modalClose: document.getElementById('modal-close'),
   modalCloseBtn: document.getElementById('modal-close-btn'),
+  pokedexMain: document.getElementById('pokedex-main'),
+  pageTitle: document.getElementById('page-title'),
+  pageTagline: document.getElementById('page-tagline'),
+  pokedexSearchWrap: document.getElementById('pokedex-search-wrap'),
+  headerStats: document.getElementById('header-stats'),
 };
 
 const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -105,15 +110,15 @@ async function fetchOnePage(url) {
   return res.json();
 }
 
-/** Load first page only – so we can show Pokémon quickly even on slow/failing API. */
+/** Load first page only. */
 async function fetchFirstBatch() {
   const url = `${POKE_API}/pokemon?limit=${FIRST_PAGE_SIZE}`;
   const data = await fetchOnePage(url);
   return parsePageResults(data);
 }
 
-/** Load remaining pages in background; append to state.list and re-render. */
-async function fetchRemainingInBackground(nextUrl) {
+/** Fetch all remaining pages; append to state.list. Resolves when done or on error. */
+async function fetchAllRemaining(nextUrl) {
   let url = nextUrl;
   while (url) {
     try {
@@ -121,8 +126,7 @@ async function fetchRemainingInBackground(nextUrl) {
       const { list, next } = parsePageResults(data);
       state.list.push(...list);
       url = next;
-      renderGrid();
-    } catch (_) {
+    } catch {
       break;
     }
   }
@@ -214,7 +218,7 @@ async function loadTypesForVisibleCards(visible) {
         img.onerror = () => { img.style.display = 'none'; };
         spritesEl.appendChild(img);
       }
-    } catch (_) {
+    } catch {
       // ignore per-card errors
     }
   }
@@ -226,13 +230,35 @@ async function fetchJson(url) {
   return res.json();
 }
 
+/** Fetch move type from PokeAPI; returns type name or 'unknown' on failure. */
+async function fetchMoveType(moveUrl) {
+  try {
+    const data = await fetchJson(moveUrl);
+    const type = data.type?.name;
+    return typeof type === 'string' ? type : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+/** Resolve types for the first N moves (name + type for each). */
+async function getMoveTypes(movesWithUrl, limit = 24) {
+  const slice = (movesWithUrl || []).slice(0, limit);
+  const results = await Promise.all(
+    slice.map((m) =>
+      fetchMoveType(m.url).then((type) => ({ name: m.name, type }))
+    )
+  );
+  return results;
+}
+
 async function openDetail(id) {
   let data = state.details.get(id);
   if (!data) {
     try {
       data = await fetchJson(`${POKE_API}/pokemon/${id}`);
       state.details.set(id, data);
-    } catch (_) {
+    } catch {
       showError('Could not load Pokémon details.');
       return;
     }
@@ -253,12 +279,23 @@ async function openDetail(id) {
     .join('');
 
   const abilities = (data.abilities || []).map(a => a.ability?.name).filter(Boolean);
-  const moves = (data.moves || []).slice(0, 24).map(m => m.move?.name).filter(Boolean);
+  const movesWithUrl = (data.moves || [])
+    .slice(0, 24)
+    .map((m) => ({ name: m.move?.name, url: m.move?.url }))
+    .filter((m) => m.name && m.url);
+  const moveTypes = await getMoveTypes(movesWithUrl, 24);
   const types = (data.types || []).map(t => t.type?.name).filter(Boolean);
   const cryUrl = data.cries?.latest || data.cries?.legacy || '';
   const cryBtn = cryUrl
     ? `<button type="button" class="modal-cry-btn" data-cry-url="${escapeHtml(cryUrl)}" aria-label="Play Pokémon cry" title="Play cry">${CRY_BTN_SVG}</button>`
     : '';
+
+  const movesMarkup = moveTypes
+    .map(
+      (m) =>
+        `<span class="move-type-${m.type}">${escapeHtml(m.name)}</span>`
+    )
+    .join('');
 
   el.modalContent.innerHTML = `
     <div class="modal-title-row">
@@ -282,7 +319,7 @@ async function openDetail(id) {
     </div>
     <div class="modal-section">
       <h3>Moves (sample)</h3>
-      <div class="modal-moves">${moves.map(m => `<span>${escapeHtml(m)}</span>`).join('')}</div>
+      <div class="modal-moves">${movesMarkup}</div>
     </div>
     <div class="modal-section">
       <h3>Stats</h3>
@@ -382,10 +419,10 @@ async function init() {
     el.loading.classList.remove('hidden');
     const { list, next } = await fetchFirstBatch();
     state.list = list;
+    if (next) await fetchAllRemaining(next);
     el.loading.classList.add('hidden');
     renderGrid();
     initDictate();
-    if (next) fetchRemainingInBackground(next);
   } catch (e) {
     const msg = e.name === 'AbortError'
       ? 'Request timed out. Check your connection and try again.'

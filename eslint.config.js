@@ -10,14 +10,29 @@ module.exports = [
     },
   },
   {
+    files: ["server.js", "test/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "script",
+      globals: {
+        require: "readonly",
+        module: "readonly",
+        process: "readonly",
+        __dirname: "readonly",
+        Buffer: "readonly",
+      },
+    },
+  },
+  {
     files: ["**/*.js"],
-    ignores: ["eslint.config.js"],
+    ignores: ["eslint.config.js", "server.js", "test/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
       globals: {
         document: "readonly",
         window: "readonly",
+        location: "readonly",
         fetch: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
@@ -25,6 +40,8 @@ module.exports = [
         AbortController: "readonly",
         requestAnimationFrame: "readonly",
         Audio: "readonly",
+        localStorage: "readonly",
+        URL: "readonly",
       },
     },
     rules: {

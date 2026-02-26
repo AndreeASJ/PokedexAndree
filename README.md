@@ -18,16 +18,17 @@ A single-page Pokédex built with vanilla HTML, CSS, and JavaScript using the fr
 
 ## How to run
 
-No build step required. Open `index.html` in a browser, or serve the folder with any static server:
+No build step required.
 
 ```bash
-# Examples
+npm start
+# or
 npx serve .
 # or
 python -m http.server 8080
 ```
 
-Then open `http://localhost:8080` (or the URL shown).  
+Then open the URL shown (e.g. **http://localhost:3000**).  
 **Note:** Some browsers restrict `fetch()` on `file://`; use a local server if the list doesn’t load.
 
 ## Tech
