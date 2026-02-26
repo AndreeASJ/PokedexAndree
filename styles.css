@@ -75,7 +75,7 @@ body {
 }
 .search-input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  padding: 0.75rem 3rem 0.75rem 2.75rem;
   font: inherit;
   font-size: 1rem;
   color: var(--text);
@@ -89,6 +89,49 @@ body {
 .search-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.dictate-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.dictate-btn:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.dictate-btn:focus {
+  outline: none;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.dictate-btn.listening {
+  color: var(--danger);
+  background: rgba(248, 81, 73, 0.15);
+  animation: dictate-pulse 1.2s ease-in-out infinite;
+}
+.dictate-btn:not(.supported) {
+  display: none;
+}
+.dictate-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+@keyframes dictate-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 .stats {
   font-size: 0.9rem;

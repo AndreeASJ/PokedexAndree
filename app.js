@@ -34,11 +34,14 @@ const el = {
   emptyQuery: document.getElementById('empty-query'),
   count: document.getElementById('count'),
   search: document.getElementById('search'),
+  dictateBtn: document.getElementById('dictate-btn'),
   modal: document.getElementById('modal'),
   modalContent: document.getElementById('modal-content'),
   modalClose: document.getElementById('modal-close'),
   modalCloseBtn: document.getElementById('modal-close-btn'),
 };
+
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 function getGeneration(id) {
   const n = Number(id);
@@ -303,6 +306,44 @@ el.search.addEventListener('keydown', (e) => {
   }
 });
 
+function initDictate() {
+  if (!SpeechRecognitionAPI || !el.dictateBtn) return;
+  el.dictateBtn.classList.add('supported');
+  const recognition = new SpeechRecognitionAPI();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+
+  el.dictateBtn.addEventListener('click', () => {
+    if (el.dictateBtn.classList.contains('listening')) {
+      recognition.abort();
+      return;
+    }
+    recognition.start();
+    el.dictateBtn.classList.add('listening');
+    el.dictateBtn.setAttribute('aria-label', 'Stop voice search');
+  });
+
+  recognition.onresult = (e) => {
+    const transcript = (e.results[0] && e.results[0][0]) ? e.results[0][0].transcript.trim() : '';
+    if (transcript) {
+      el.search.value = transcript;
+      state.searchQuery = transcript;
+      renderGrid();
+    }
+  };
+
+  recognition.onend = () => {
+    el.dictateBtn.classList.remove('listening');
+    el.dictateBtn.setAttribute('aria-label', 'Search by voice');
+  };
+
+  recognition.onerror = () => {
+    el.dictateBtn.classList.remove('listening');
+    el.dictateBtn.setAttribute('aria-label', 'Search by voice');
+  };
+}
+
 async function init() {
   try {
     hideError();
@@ -311,6 +352,7 @@ async function init() {
     state.list = list;
     el.loading.classList.add('hidden');
     renderGrid();
+    initDictate();
     if (next) fetchRemainingInBackground(next);
   } catch (e) {
     const msg = e.name === 'AbortError'
