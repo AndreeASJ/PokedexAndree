@@ -73,7 +73,15 @@ body {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-.logo-icon { color: var(--accent); margin-right: 0.35em; }
+.logo-icon {
+  display: inline-block;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
 .tagline {
   margin: 0 0 1.5rem;
   color: var(--text-muted);
@@ -84,14 +92,80 @@ body {
   max-width: 420px;
   margin: 0 auto 0.75rem;
 }
+.search-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.search-mode-label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.search-mode-select {
+  padding: 0.35rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.search-mode-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.search-input-row {
+  position: relative;
+}
+.filter-hint {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+.filter-hint.hidden {
+  display: none;
+}
+.search-input-row .search-input,
+.search-mode-row .sort-by-label { margin-left: 1rem; }
+.search-input-row .search-region-select,
+.search-input-row .search-generation-select {
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 2.75rem;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-input-row .search-region-select,
+.search-input-row .search-generation-select {
+  padding-right: 2.75rem;
+  cursor: pointer;
+  appearance: auto;
+}
 .search-icon {
   position: absolute;
-  left: 1rem;
+  left: 1.35rem;
   top: 50%;
   transform: translateY(-50%);
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-muted);
-  font-size: 1.1rem;
   pointer-events: none;
+}
+.search-icon-svg {
+  width: 100%;
+  height: 100%;
 }
 .search-input {
   width: 100%;
@@ -106,13 +180,15 @@ body {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .search-input::placeholder { color: var(--text-muted); }
-.search-input:focus {
+.search-input:focus,
+.search-input-row .search-region-select:focus,
+.search-input-row .search-generation-select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .dictate-btn {
   position: absolute;
-  right: 0.5rem;
+  right: 0.35rem;
   top: 50%;
   transform: translateY(-50%);
   width: 2.25rem;
@@ -251,6 +327,7 @@ body {
   transition: opacity 0.2s ease-out;
 }
 .card {
+  position: relative;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -288,14 +365,92 @@ body {
   color: var(--text-muted);
   margin-bottom: 0.35rem;
 }
-.card-sprites {
+.card-checklist-wrap {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
   display: flex;
+  gap: 0.25rem;
+}
+.card-checklist-btn {
+  font-size: 0.85rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  border-radius: 50%;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.card-checklist-btn:hover {
+  transform: scale(1.1);
+}
+.card-checklist-btn.card-catch:hover {
+  background: var(--border);
+  color: var(--text);
+}
+.card-checklist-btn.card-caught {
+  background: var(--success);
+  color: var(--bg);
+  border-color: var(--success);
+}
+.card-checklist-btn.card-caught:hover {
+  filter: brightness(1.1);
+}
+.card-checklist {
+  font-size: 0.85rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+}
+.card-caught {
+  background: var(--success);
+  color: var(--bg);
+}
+.card-seen {
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.card-sprites {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
   min-height: 120px;
   margin-bottom: 0.75rem;
   flex-wrap: wrap;
+}
+.card-sprite-pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+.card-sprite-pair .card-sprite-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+.card-sprite-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
 }
 .card-sprites img {
   width: 72px;
@@ -305,7 +460,6 @@ body {
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
 }
-.card-sprites img.main-sprite { width: 104px; height: 104px; }
 .card-sprites img.sprite-3d {
   image-rendering: auto;
   image-rendering: -webkit-optimize-contrast;
@@ -390,6 +544,30 @@ body {
 .modal-moves .move-type-fairy { background: #ee99ac; color: #1a0008; }
 .modal-moves .move-type-unknown { background: var(--surface); color: var(--text-muted); }
 
+/* Move tooltip (hover/focus on move chips in detail modal) */
+.move-tooltip {
+  position: fixed;
+  z-index: 101;
+  max-width: 320px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease-out, visibility 0.15s ease-out;
+}
+.move-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+}
+.move-tooltip br { margin: 0.2em 0; }
+
 /* --- Modal --- */
 .modal {
   position: fixed;
@@ -449,12 +627,12 @@ body {
 }
 .modal-sprites {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0;
   min-width: 0;
   padding: 8px 0;
 }
+.modal-sprites .modal-sprites-row img,
 .modal-sprites img {
   width: 120px;
   height: 120px;
@@ -552,6 +730,154 @@ body {
   font-size: 0.85rem;
 }
 .modal-stats div strong { display: block; color: var(--text-muted); font-size: 0.75rem; margin-bottom: 0.15rem; }
+
+/* Games & Locations sections */
+.modal-games,
+.modal-locations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.game-chip,
+.location-chip {
+  font-size: 0.8rem;
+  padding: 0.25em 0.6em;
+  border-radius: var(--radius-sm);
+  text-transform: capitalize;
+  background: var(--surface);
+  color: var(--text);
+}
+.modal-empty-text {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Evolution carousel */
+.modal-evolution-wrap {
+  min-height: 2rem;
+}
+.evolution-carousel {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.evolution-carousel::-webkit-scrollbar {
+  height: 6px;
+}
+.evolution-carousel::-webkit-scrollbar-track {
+  background: var(--surface);
+  border-radius: 3px;
+}
+.evolution-carousel::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+.evolution-card {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 88px;
+  padding: 0.5rem;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  scroll-snap-align: start;
+}
+.evolution-card img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.evolution-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  text-align: center;
+}
+
+.modal-checklist-section { margin-top: 1rem; }
+.modal-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.modal-checklist-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.modal-checklist-item input { cursor: pointer; }
+.modal-checklist-item input:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- Lightbox (sprite zoom) --- */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: pointer;
+}
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.lightbox-content img {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: auto;
+}
+.lightbox-content img.sprite-3d {
+  image-rendering: auto;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* --- Modal sprite rows (gender) --- */
+.modal-sprites-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  min-width: 0;
+  padding: 8px 0;
+}
+.modal-sprites-row:not(:first-child) { margin-top: 0.5rem; }
+.modal-sprites-label {
+  width: 100%;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
 
 /* --- TCG section --- */
 .main-tcg {
@@ -655,8 +981,8 @@ body {
 @media (max-width: 520px) {
   .grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
   .card { min-height: 220px; padding: 1rem; }
-  .card-sprites img { width: 64px; height: 64px; }
-  .card-sprites img.main-sprite { width: 88px; height: 88px; }
+  .card-sprites img,
+  .card-sprite-pair .card-sprite-img { width: 64px; height: 64px; }
   .card-sprites { min-height: 100px; }
   .card-name { font-size: 1rem; }
 }

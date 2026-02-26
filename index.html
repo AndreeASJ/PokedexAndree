@@ -13,24 +13,68 @@
   <div class="app">
     <header class="header">
       <div class="header-inner">
-        <nav class="nav" aria-label="Main">
-          <a href="#/" class="nav-link nav-link-pokedex active">Pokédex</a>
-        </nav>
         <h1 class="logo">
-          <span class="logo-icon">◆</span> <span id="page-title">Pokédex</span>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="" class="logo-icon" width="40" height="40" />
+          <span id="page-title">Pokédex</span>
         </h1>
         <p class="tagline" id="page-tagline">Explore every Pokémon</p>
         <div class="search-wrap" id="pokedex-search-wrap">
-          <input
-            type="search"
-            id="search"
-            class="search-input"
-            placeholder="Search by name…"
-            autocomplete="off"
-            aria-label="Search Pokémon by name"
-          />
-          <span class="search-icon" aria-hidden="true">⌕</span>
-          <button
+          <div class="search-mode-row">
+            <label for="search-mode" class="search-mode-label">Filter by</label>
+            <select id="search-mode" class="search-mode-select" aria-label="Filter type">
+              <option value="name">Name</option>
+              <option value="number">Number</option>
+              <option value="region">Region</option>
+              <option value="generation">Generation</option>
+              <option value="legendary">Legendary</option>
+              <option value="mythical">Mythical</option>
+              <option value="pseudolegendary">Pseudolegendary</option>
+            </select>
+            <label for="sort-by" class="search-mode-label sort-by-label">Sort by</label>
+            <select id="sort-by" class="search-mode-select" aria-label="Sort order">
+              <option value="number">Number</option>
+              <option value="name-asc">Name A–Z</option>
+              <option value="name-desc">Name Z–A</option>
+            </select>
+          </div>
+          <div class="search-input-row">
+            <span id="filter-hint" class="filter-hint hidden" aria-live="polite"></span>
+            <input
+              type="search"
+              id="search"
+              class="search-input"
+              placeholder="Search by name…"
+              autocomplete="off"
+              aria-label="Search Pokémon by name"
+            />
+            <select id="search-region" class="search-input search-region-select hidden" aria-label="Select region">
+              <option value="">All regions</option>
+              <option value="Kanto">Kanto (1–151)</option>
+              <option value="Johto">Johto (152–251)</option>
+              <option value="Hoenn">Hoenn (252–386)</option>
+              <option value="Sinnoh">Sinnoh (387–493)</option>
+              <option value="Unova">Unova (494–649)</option>
+              <option value="Kalos">Kalos (650–721)</option>
+              <option value="Alola">Alola (722–809)</option>
+              <option value="Galar">Galar (810–905)</option>
+              <option value="Paldea">Paldea (906+)</option>
+            </select>
+            <select id="search-generation" class="search-input search-generation-select hidden" aria-label="Select generation">
+              <option value="">All generations</option>
+              <option value="0">Gen I (1–151)</option>
+              <option value="1">Gen II (152–251)</option>
+              <option value="2">Gen III (252–386)</option>
+              <option value="3">Gen IV (387–493)</option>
+              <option value="4">Gen V (494–649)</option>
+              <option value="5">Gen VI (650–721)</option>
+              <option value="6">Gen VII (722–809)</option>
+              <option value="7">Gen VIII (810–905)</option>
+              <option value="8">Gen IX (906+)</option>
+            </select>
+            <span id="search-icon" class="search-icon" aria-hidden="true">
+              <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </span>
+            <button
             type="button"
             id="dictate-btn"
             class="dictate-btn"
@@ -71,6 +115,13 @@
       <div class="modal-panel">
         <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close">×</button>
         <div id="modal-content" class="modal-content"></div>
+      </div>
+    </aside>
+
+    <aside id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true" aria-label="Enlarged sprite">
+      <div class="lightbox-backdrop" id="lightbox-close"></div>
+      <div class="lightbox-content">
+        <img id="lightbox-img" src="" alt="Enlarged Pokémon sprite" />
       </div>
     </aside>
   </div>
