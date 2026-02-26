@@ -1059,7 +1059,7 @@ function retryInit() {
   init();
 }
 
-// Advanced filter: smooth expand/collapse (class-driven so CSS transition runs)
+// Advanced filter: instant open/close (no transition)
 const detailsEl = document.getElementById('advanced-filter');
 if (detailsEl) {
   const summaryEl = detailsEl.querySelector('.advanced-filter-summary');
