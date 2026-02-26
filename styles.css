@@ -162,8 +162,18 @@ body {
   display: inline-block;
   transition: transform 0.2s;
 }
-.advanced-filter[open] .advanced-filter-summary::before { transform: rotate(90deg); }
+.advanced-filter--open .advanced-filter-summary::before { transform: rotate(90deg); }
+.advanced-filter-panel-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.advanced-filter.advanced-filter--open .advanced-filter-panel-wrapper {
+  grid-template-rows: 1fr;
+}
 .advanced-filter-panel {
+  min-height: 0;
+  overflow: hidden;
   padding: 1rem 1.25rem 1.25rem;
   border-top: 1px solid var(--border);
   display: flex;
@@ -214,6 +224,12 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1rem;
+}
+.filter-options--gen {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem 0.75rem;
+  max-width: 100%;
 }
 .filter-checkbox-label {
   display: inline-flex;

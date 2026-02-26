@@ -22,8 +22,8 @@ const GENERATIONS = [
   { name: 'IX', min: 906, max: 9999 },
 ];
 
-// Region names for search (Gen I = Kanto, etc.)
-const REGION_NAMES = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar', 'Paldea'];
+// Region names (Gen I = Kanto, etc.) – reserved for future filter use
+const _REGION_NAMES = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar', 'Paldea'];
 
 // Legendary (box legendaries; mythicals excluded), Mythical, and Pseudolegendary by National Dex ID
 const LEGENDARY_IDS = new Set([144,145,146,150,243,244,245,249,250,377,378,379,380,381,382,383,384,480,481,482,483,484,485,486,487,488,638,639,640,641,642,643,644,645,646,647,649,716,717,718,789,790,791,792,793,794,795,796,797,798,799,800,803,804,805,806,888,889,890,891,892,893,894,895,896,897,898,905,1004,1005,1006,1007,1008,1009,1010,1011,1012,1013,1014,1015,1016,1017]);
@@ -42,6 +42,7 @@ const state = {
   searchDebounceId: null,
   checklist: {},
   filterCategories: { legendary: false, mythical: false, pseudolegendary: false },
+  filterAllGen: true,
   filterGenerations: [false, false, false, false, false, false, false, false, false],
   filterCaughtStatus: { caught: false, notCaught: false }, // both false = show all; one true = filter to that
 };
@@ -252,9 +253,9 @@ function getFilteredList() {
     });
   }
 
-  // Advanced filter: generation (any selected = union)
+  // Advanced filter: generation (any selected = union; skip if All Gen is on)
   const gens = state.filterGenerations;
-  const anyGen = gens.some(Boolean);
+  const anyGen = !state.filterAllGen && gens.some(Boolean);
   if (anyGen) {
     list = list.filter(p => {
       const n = Number(p.id);
@@ -863,12 +864,29 @@ function initSearchMode() {
       renderGrid();
     });
   });
+  // Advanced filter: All Gen checkbox
+  const allGenEl = document.getElementById('filter-all-gen');
+  if (allGenEl) {
+    allGenEl.checked = state.filterAllGen;
+    allGenEl.addEventListener('change', () => {
+      state.filterAllGen = allGenEl.checked;
+      if (state.filterAllGen) {
+        state.filterGenerations = [false, false, false, false, false, false, false, false, false];
+        document.querySelectorAll('.filter-checkbox.filter-gen').forEach(cb => { cb.checked = false; });
+      }
+      renderGrid();
+    });
+  }
   // Advanced filter: generation checkboxes
   document.querySelectorAll('.filter-checkbox.filter-gen').forEach(cb => {
     const i = parseInt(cb.dataset.gen, 10);
     cb.checked = state.filterGenerations[i];
     cb.addEventListener('change', () => {
       state.filterGenerations[i] = cb.checked;
+      if (cb.checked) {
+        state.filterAllGen = false;
+        if (allGenEl) allGenEl.checked = false;
+      }
       renderGrid();
     });
   });
@@ -1009,7 +1027,7 @@ function initHeaderScroll() {
     setTimeout(updateHeaderOffset, 200);
     setTimeout(updateHeaderOffset, 600);
   });
-  const resizeObserver = new ResizeObserver(updateHeaderOffset);
+  const resizeObserver = new window.ResizeObserver(updateHeaderOffset);
   resizeObserver.observe(header);
   window.addEventListener('resize', updateHeaderOffset);
 
@@ -1039,6 +1057,20 @@ function retryInit() {
   state.searchQuery = '';
   if (el.search) el.search.value = '';
   init();
+}
+
+// Advanced filter: smooth expand/collapse (class-driven so CSS transition runs)
+const detailsEl = document.getElementById('advanced-filter');
+if (detailsEl) {
+  const summaryEl = detailsEl.querySelector('.advanced-filter-summary');
+  if (summaryEl) {
+    summaryEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isOpen = detailsEl.classList.toggle('advanced-filter--open');
+      detailsEl.open = isOpen;
+    });
+    if (detailsEl.open) detailsEl.classList.add('advanced-filter--open');
+  }
 }
 
 // Quick caught button: click on card toggles caught without opening modal

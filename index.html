@@ -40,6 +40,7 @@
           </div>
           <details class="advanced-filter" id="advanced-filter">
             <summary class="advanced-filter-summary">Advanced filter</summary>
+            <div class="advanced-filter-panel-wrapper">
             <div class="advanced-filter-panel">
               <div class="filter-controls-row">
                 <div class="control-group">
@@ -68,7 +69,8 @@
               </fieldset>
               <fieldset class="filter-group">
                 <legend class="filter-legend">Generation</legend>
-                <div class="filter-options" id="filter-generations">
+                <div class="filter-options filter-options--gen" id="filter-generations">
+                  <label class="filter-checkbox-label"><input type="checkbox" id="filter-all-gen" class="filter-checkbox filter-all-gen" /> All Gen</label>
                   <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="0" /> Gen I</label>
                   <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="1" /> Gen II</label>
                   <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="2" /> Gen III</label>
@@ -87,6 +89,7 @@
                   <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-caught" data-caught="not-caught" /> Not caught</label>
                 </div>
               </fieldset>
+            </div>
             </div>
           </details>
         </div>
