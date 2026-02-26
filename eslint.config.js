@@ -23,10 +23,12 @@ module.exports = [
         clearTimeout: "readonly",
         console: "readonly",
         AbortController: "readonly",
+        requestAnimationFrame: "readonly",
+        Audio: "readonly",
       },
     },
     rules: {
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
       "no-undef": "error",
     },
   },

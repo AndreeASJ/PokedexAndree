@@ -138,7 +138,6 @@ function renderCard(p, index) {
   const id = p.id;
   const mainSprite = spriteUrl(id);
   const officialSprite = spriteUrl(id, 'official');
-  const types = []; // will be filled when we have details; for list we can leave empty or fetch later
 
   const card = document.createElement('button');
   card.type = 'button';
@@ -233,7 +232,7 @@ async function openDetail(id) {
     try {
       data = await fetchJson(`${POKE_API}/pokemon/${id}`);
       state.details.set(id, data);
-    } catch (e) {
+    } catch (_) {
       showError('Could not load Pokémon details.');
       return;
     }
