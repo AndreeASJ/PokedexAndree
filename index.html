@@ -14,31 +14,12 @@
     <header class="header">
       <div class="header-inner">
         <h1 class="logo">
-          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="" class="logo-icon" width="40" height="40" />
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" alt="" class="logo-icon" width="56" height="56" />
           <span id="page-title">Pokédex</span>
         </h1>
         <p class="tagline" id="page-tagline">Explore every Pokémon</p>
         <div class="search-wrap" id="pokedex-search-wrap">
-          <div class="search-mode-row">
-            <label for="search-mode" class="search-mode-label">Filter by</label>
-            <select id="search-mode" class="search-mode-select" aria-label="Filter type">
-              <option value="name">Name</option>
-              <option value="number">Number</option>
-              <option value="region">Region</option>
-              <option value="generation">Generation</option>
-              <option value="legendary">Legendary</option>
-              <option value="mythical">Mythical</option>
-              <option value="pseudolegendary">Pseudolegendary</option>
-            </select>
-            <label for="sort-by" class="search-mode-label sort-by-label">Sort by</label>
-            <select id="sort-by" class="search-mode-select" aria-label="Sort order">
-              <option value="number">Number</option>
-              <option value="name-asc">Name A–Z</option>
-              <option value="name-desc">Name Z–A</option>
-            </select>
-          </div>
           <div class="search-input-row">
-            <span id="filter-hint" class="filter-hint hidden" aria-live="polite"></span>
             <input
               type="search"
               id="search"
@@ -47,47 +28,67 @@
               autocomplete="off"
               aria-label="Search Pokémon by name"
             />
-            <select id="search-region" class="search-input search-region-select hidden" aria-label="Select region">
-              <option value="">All regions</option>
-              <option value="Kanto">Kanto (1–151)</option>
-              <option value="Johto">Johto (152–251)</option>
-              <option value="Hoenn">Hoenn (252–386)</option>
-              <option value="Sinnoh">Sinnoh (387–493)</option>
-              <option value="Unova">Unova (494–649)</option>
-              <option value="Kalos">Kalos (650–721)</option>
-              <option value="Alola">Alola (722–809)</option>
-              <option value="Galar">Galar (810–905)</option>
-              <option value="Paldea">Paldea (906+)</option>
-            </select>
-            <select id="search-generation" class="search-input search-generation-select hidden" aria-label="Select generation">
-              <option value="">All generations</option>
-              <option value="0">Gen I (1–151)</option>
-              <option value="1">Gen II (152–251)</option>
-              <option value="2">Gen III (252–386)</option>
-              <option value="3">Gen IV (387–493)</option>
-              <option value="4">Gen V (494–649)</option>
-              <option value="5">Gen VI (650–721)</option>
-              <option value="6">Gen VII (722–809)</option>
-              <option value="7">Gen VIII (810–905)</option>
-              <option value="8">Gen IX (906+)</option>
-            </select>
             <span id="search-icon" class="search-icon" aria-hidden="true">
               <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             </span>
-            <button
-            type="button"
-            id="dictate-btn"
-            class="dictate-btn"
-            aria-label="Search by voice"
-            title="Search by voice"
-          >
-            <svg class="dictate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/>
-              <line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
-          </button>
+            <button type="button" id="dictate-btn" class="dictate-btn" aria-label="Search by voice" title="Search by voice">
+              <svg class="dictate-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <details class="advanced-filter" id="advanced-filter">
+            <summary class="advanced-filter-summary">Advanced filter</summary>
+            <div class="advanced-filter-panel">
+              <div class="filter-controls-row">
+                <div class="control-group">
+                  <label for="sort-by" class="filter-legend">Sort by</label>
+                  <select id="sort-by" class="control-select" aria-label="Sort order">
+                    <option value="number">Number</option>
+                    <option value="name-asc">Name A–Z</option>
+                    <option value="name-desc">Name Z–A</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <label for="search-mode" class="filter-legend">Search by</label>
+                  <select id="search-mode" class="control-select" aria-label="Search type">
+                    <option value="name">Name</option>
+                    <option value="number">Number</option>
+                  </select>
+                </div>
+              </div>
+              <fieldset class="filter-group">
+                <legend class="filter-legend">Category</legend>
+                <div class="filter-options">
+                  <label class="filter-checkbox-label"><input type="checkbox" id="filter-cat-legendary" class="filter-checkbox" data-category="legendary" /> Legendary</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" id="filter-cat-mythical" class="filter-checkbox" data-category="mythical" /> Mythical</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" id="filter-cat-pseudolegendary" class="filter-checkbox" data-category="pseudolegendary" /> Pseudolegendary</label>
+                </div>
+              </fieldset>
+              <fieldset class="filter-group">
+                <legend class="filter-legend">Generation</legend>
+                <div class="filter-options" id="filter-generations">
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="0" /> Gen I</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="1" /> Gen II</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="2" /> Gen III</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="3" /> Gen IV</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="4" /> Gen V</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="5" /> Gen VI</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="6" /> Gen VII</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="7" /> Gen VIII</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-gen" data-gen="8" /> Gen IX</label>
+                </div>
+              </fieldset>
+              <fieldset class="filter-group">
+                <legend class="filter-legend">Caught status</legend>
+                <div class="filter-options">
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-caught" data-caught="caught" /> Caught</label>
+                  <label class="filter-checkbox-label"><input type="checkbox" class="filter-checkbox filter-caught" data-caught="not-caught" /> Not caught</label>
+                </div>
+              </fieldset>
+            </div>
+          </details>
         </div>
         <div class="stats" aria-live="polite" id="header-stats">
           <span id="count">—</span> Pokémon

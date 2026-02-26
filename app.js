@@ -33,15 +33,17 @@ const PSEUDO_LEGENDARY_IDS = new Set([147,148,149,246,247,248,371,372,373,374,37
 const CHECKLIST_STORAGE_KEY = 'pokedex_checklist';
 
 const state = {
-  list: [],      // { name, url, id }[]
-  details: new Map(), // id -> full API response
-  moveDetails: new Map(), // move URL -> { name, type, power, accuracy, pp, effect }
+  list: [],
+  details: new Map(),
+  moveDetails: new Map(),
   searchQuery: '',
-  searchMode: 'name', // 'name' | 'number' | 'region' | 'generation' | 'legendary' | 'mythical' | 'pseudolegendary'
-  sortBy: 'number',  // 'number' | 'name-asc' | 'name-desc'
+  searchMode: 'name', // 'name' | 'number' — only for text search
+  sortBy: 'number',
   searchDebounceId: null,
-  /** checklist[genKey] = { seen: Set<id>, caught: Set<id> }; genKey = gen1, gen2, ... */
   checklist: {},
+  filterCategories: { legendary: false, mythical: false, pseudolegendary: false },
+  filterGenerations: [false, false, false, false, false, false, false, false, false],
+  filterCaughtStatus: { caught: false, notCaught: false }, // both false = show all; one true = filter to that
 };
 
 const SEARCH_DEBOUNCE_MS = 180;
@@ -65,11 +67,10 @@ const el = {
   pageTagline: document.getElementById('page-tagline'),
   pokedexSearchWrap: document.getElementById('pokedex-search-wrap'),
   searchModeSelect: document.getElementById('search-mode'),
-  searchRegionSelect: document.getElementById('search-region'),
-  searchGenerationSelect: document.getElementById('search-generation'),
   sortBySelect: document.getElementById('sort-by'),
-  filterHint: document.getElementById('filter-hint'),
+  advancedFilter: document.getElementById('advanced-filter'),
   headerStats: document.getElementById('header-stats'),
+  header: document.querySelector('.header'),
   lightbox: document.getElementById('lightbox'),
   lightboxImg: document.getElementById('lightbox-img'),
   lightboxClose: document.getElementById('lightbox-close'),
@@ -239,62 +240,57 @@ async function fetchAllRemaining(nextUrl) {
 }
 
 function getFilteredList() {
-  const q = state.searchQuery.trim();
-  const mode = state.searchMode;
+  let list = state.list;
 
-  if (mode === 'name') {
-    const qLower = q.toLowerCase();
-    if (!qLower) return state.list;
-    return state.list.filter(p => p.name.toLowerCase().includes(qLower));
+  // Advanced filter: category (any selected = union)
+  const cat = state.filterCategories;
+  const anyCategory = cat.legendary || cat.mythical || cat.pseudolegendary;
+  if (anyCategory) {
+    list = list.filter(p => {
+      const id = Number(p.id);
+      return (cat.legendary && LEGENDARY_IDS.has(id)) || (cat.mythical && MYTHICAL_IDS.has(id)) || (cat.pseudolegendary && PSEUDO_LEGENDARY_IDS.has(id));
+    });
   }
 
-  if (mode === 'number') {
-    if (!q) return state.list;
-    const num = Number(q);
-    if (!Number.isNaN(num) && String(num) === q.trim()) {
-      return state.list.filter(p => Number(p.id) === num);
-    }
-    const rangeMatch = q.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/);
-    if (rangeMatch) {
-      const low = Math.max(1, parseInt(rangeMatch[1], 10));
-      const high = parseInt(rangeMatch[2], 10);
-      if (!Number.isNaN(low) && !Number.isNaN(high) && low <= high) {
-        return state.list.filter(p => {
-          const n = Number(p.id);
-          return n >= low && n <= high;
-        });
+  // Advanced filter: generation (any selected = union)
+  const gens = state.filterGenerations;
+  const anyGen = gens.some(Boolean);
+  if (anyGen) {
+    list = list.filter(p => {
+      const n = Number(p.id);
+      return gens.some((checked, i) => checked && GENERATIONS[i] && n >= GENERATIONS[i].min && n <= GENERATIONS[i].max);
+    });
+  }
+
+  // Advanced filter: caught status (only if exactly one option selected)
+  const cs = state.filterCaughtStatus;
+  if (cs.caught && !cs.notCaught) list = list.filter(p => isCaught(p.id));
+  else if (!cs.caught && cs.notCaught) list = list.filter(p => !isCaught(p.id));
+
+  // Text search (name or number) on top of advanced filter
+  const q = state.searchQuery.trim();
+  if (q) {
+    if (state.searchMode === 'name') {
+      const qLower = q.toLowerCase();
+      list = list.filter(p => p.name.toLowerCase().includes(qLower));
+    } else {
+      const num = Number(q);
+      if (!Number.isNaN(num) && String(num) === q.trim()) {
+        list = list.filter(p => Number(p.id) === num);
+      } else {
+        const rangeMatch = q.match(/^\s*(\d+)\s*-\s*(\d+)\s*$/);
+        if (rangeMatch) {
+          const low = Math.max(1, parseInt(rangeMatch[1], 10));
+          const high = parseInt(rangeMatch[2], 10);
+          if (!Number.isNaN(low) && !Number.isNaN(high) && low <= high) {
+            list = list.filter(p => { const n = Number(p.id); return n >= low && n <= high; });
+          }
+        }
       }
     }
-    return state.list;
   }
 
-  if (mode === 'region') {
-    const regionIndex = REGION_NAMES.findIndex(r => r.toLowerCase() === q.toLowerCase());
-    if (regionIndex < 0) return state.list;
-    const gen = GENERATIONS[regionIndex];
-    if (!gen) return state.list;
-    return state.list.filter(p => {
-      const n = Number(p.id);
-      return n >= gen.min && n <= gen.max;
-    });
-  }
-
-  if (mode === 'generation') {
-    const genIndex = parseInt(q, 10);
-    if (Number.isNaN(genIndex) || genIndex < 0 || genIndex >= GENERATIONS.length) return state.list;
-    const gen = GENERATIONS[genIndex];
-    if (!gen) return state.list;
-    return state.list.filter(p => {
-      const n = Number(p.id);
-      return n >= gen.min && n <= gen.max;
-    });
-  }
-
-  if (mode === 'legendary') return state.list.filter(p => LEGENDARY_IDS.has(Number(p.id)));
-  if (mode === 'mythical') return state.list.filter(p => MYTHICAL_IDS.has(Number(p.id)));
-  if (mode === 'pseudolegendary') return state.list.filter(p => PSEUDO_LEGENDARY_IDS.has(Number(p.id)));
-
-  return state.list;
+  return list;
 }
 
 function sortFilteredList(list) {
@@ -362,7 +358,8 @@ function renderGrid() {
 
   if (filtered.length === 0) {
     el.grid.innerHTML = '';
-    const emptyLabel = state.searchMode === 'legendary' ? 'Legendary' : state.searchMode === 'mythical' ? 'Mythical' : state.searchMode === 'pseudolegendary' ? 'Pseudolegendary' : state.searchQuery.trim();
+    const hasFilter = state.searchQuery.trim() || (state.filterCategories.legendary || state.filterCategories.mythical || state.filterCategories.pseudolegendary || state.filterGenerations.some(Boolean)) || (state.filterCaughtStatus.caught && !state.filterCaughtStatus.notCaught) || (!state.filterCaughtStatus.caught && state.filterCaughtStatus.notCaught);
+    const emptyLabel = hasFilter ? 'your filters' : '';
     if (emptyLabel) {
       el.emptyQuery.textContent = emptyLabel;
       el.empty.classList.remove('hidden');
@@ -847,24 +844,8 @@ function initSearchMode() {
   if (el.searchModeSelect) {
     el.searchModeSelect.addEventListener('change', () => {
       state.searchMode = el.searchModeSelect.value;
-      state.searchQuery = '';
-      if (el.search) el.search.value = '';
-      if (el.searchRegionSelect) el.searchRegionSelect.value = '';
-      if (el.searchGenerationSelect) el.searchGenerationSelect.value = '';
       updateSearchPlaceholder();
       toggleSearchInputs();
-      renderGrid();
-    });
-  }
-  if (el.searchRegionSelect) {
-    el.searchRegionSelect.addEventListener('change', () => {
-      state.searchQuery = el.searchRegionSelect.value || '';
-      renderGrid();
-    });
-  }
-  if (el.searchGenerationSelect) {
-    el.searchGenerationSelect.addEventListener('change', () => {
-      state.searchQuery = el.searchGenerationSelect.value || '';
       renderGrid();
     });
   }
@@ -874,6 +855,32 @@ function initSearchMode() {
       renderGrid();
     });
   }
+  // Advanced filter: category checkboxes
+  document.querySelectorAll('.filter-checkbox[data-category]').forEach(cb => {
+    cb.checked = state.filterCategories[cb.dataset.category];
+    cb.addEventListener('change', () => {
+      state.filterCategories[cb.dataset.category] = cb.checked;
+      renderGrid();
+    });
+  });
+  // Advanced filter: generation checkboxes
+  document.querySelectorAll('.filter-checkbox.filter-gen').forEach(cb => {
+    const i = parseInt(cb.dataset.gen, 10);
+    cb.checked = state.filterGenerations[i];
+    cb.addEventListener('change', () => {
+      state.filterGenerations[i] = cb.checked;
+      renderGrid();
+    });
+  });
+  // Advanced filter: caught status checkboxes
+  document.querySelectorAll('.filter-checkbox.filter-caught').forEach(cb => {
+    const key = cb.dataset.caught === 'caught' ? 'caught' : 'notCaught';
+    cb.checked = state.filterCaughtStatus[key];
+    cb.addEventListener('change', () => {
+      state.filterCaughtStatus[key] = cb.checked;
+      renderGrid();
+    });
+  });
   updateSearchPlaceholder();
   toggleSearchInputs();
 }
@@ -890,56 +897,12 @@ function updateSearchPlaceholder() {
 }
 
 function toggleSearchInputs() {
-  const isRegion = state.searchMode === 'region';
-  const isGeneration = state.searchMode === 'generation';
-  const isCategoryFilter = state.searchMode === 'legendary' || state.searchMode === 'mythical' || state.searchMode === 'pseudolegendary';
-  const showTextInput = state.searchMode === 'name' || state.searchMode === 'number';
-  const showSearchIcon = showTextInput;
   const showDictateBtn = state.searchMode === 'name';
-
-  if (el.search) {
-    el.search.classList.toggle('hidden', !showTextInput);
-  }
-  if (el.searchRegionSelect) {
-    el.searchRegionSelect.classList.toggle('hidden', !isRegion);
-    if (isRegion) state.searchQuery = el.searchRegionSelect.value || '';
-  }
-  if (el.searchGenerationSelect) {
-    el.searchGenerationSelect.classList.toggle('hidden', !isGeneration);
-    if (isGeneration) state.searchQuery = el.searchGenerationSelect.value ?? '';
-  }
-  if (el.searchIcon) {
-    el.searchIcon.classList.toggle('hidden', !showSearchIcon);
-  }
-  if (el.dictateBtn) {
-    el.dictateBtn.classList.toggle('hidden', !showDictateBtn);
-  }
-  if (el.filterHint) {
-    if (isGeneration) {
-      el.filterHint.textContent = 'Choose generation:';
-      el.filterHint.classList.remove('hidden');
-    } else if (isRegion) {
-      el.filterHint.textContent = 'Choose region:';
-      el.filterHint.classList.remove('hidden');
-    } else if (state.searchMode === 'legendary') {
-      el.filterHint.textContent = 'Showing Legendary Pokémon';
-      el.filterHint.classList.remove('hidden');
-    } else if (state.searchMode === 'mythical') {
-      el.filterHint.textContent = 'Showing Mythical Pokémon';
-      el.filterHint.classList.remove('hidden');
-    } else if (state.searchMode === 'pseudolegendary') {
-      el.filterHint.textContent = 'Showing Pseudolegendary Pokémon';
-      el.filterHint.classList.remove('hidden');
-    } else {
-      el.filterHint.textContent = '';
-      el.filterHint.classList.add('hidden');
-    }
-  }
-  if (isCategoryFilter) state.searchQuery = '';
+  if (el.searchIcon) el.searchIcon.classList.remove('hidden');
+  if (el.dictateBtn) el.dictateBtn.classList.toggle('hidden', !showDictateBtn);
 }
 
 el.search.addEventListener('input', () => {
-  if (state.searchMode === 'region') return;
   state.searchQuery = state.searchMode === 'number' ? el.search.value.trim() : el.search.value;
   if (state.searchDebounceId) clearTimeout(state.searchDebounceId);
   state.searchDebounceId = setTimeout(() => {
@@ -1018,6 +981,59 @@ async function init() {
   }
 }
 
+function initHeaderScroll() {
+  const header = el.header;
+  if (!header) return;
+  const SCROLL_THRESHOLD = 80;
+  const SCROLL_UP_DELTA = 30;
+  let lastScrollY = window.scrollY;
+  let ticking = false;
+
+  const HEADER_OFFSET_BUFFER = 48;
+  const HEADER_OFFSET_MIN = 420;
+  const main = el.pokedexMain;
+
+  function updateHeaderOffset() {
+    const height = header.offsetHeight;
+    const paddingTopPx = Math.max(height + HEADER_OFFSET_BUFFER, HEADER_OFFSET_MIN);
+    document.documentElement.style.setProperty('--header-offset', String(paddingTopPx));
+    if (main) main.style.paddingTop = paddingTopPx + 'px';
+  }
+  updateHeaderOffset();
+  window.addEventListener('load', () => {
+    updateHeaderOffset();
+    requestAnimationFrame(() => {
+      updateHeaderOffset();
+      if (main) requestAnimationFrame(updateHeaderOffset);
+    });
+    setTimeout(updateHeaderOffset, 200);
+    setTimeout(updateHeaderOffset, 600);
+  });
+  const resizeObserver = new ResizeObserver(updateHeaderOffset);
+  resizeObserver.observe(header);
+  window.addEventListener('resize', updateHeaderOffset);
+
+  function onScroll() {
+    const scrollY = window.scrollY;
+    if (scrollY <= SCROLL_THRESHOLD) {
+      header.classList.remove('header-hidden');
+    } else if (scrollY < lastScrollY - SCROLL_UP_DELTA) {
+      header.classList.remove('header-hidden');
+    } else if (scrollY > lastScrollY) {
+      header.classList.add('header-hidden');
+    }
+    lastScrollY = scrollY;
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(onScroll);
+      ticking = true;
+    }
+  }, { passive: true });
+}
+
 function retryInit() {
   state.list = [];
   state.searchQuery = '';
@@ -1042,4 +1058,5 @@ if (el.grid) {
   });
 }
 
+initHeaderScroll();
 init();
