@@ -200,6 +200,7 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1.25rem;
   align-content: start;
+  transition: opacity 0.2s ease-out;
 }
 .card {
   background: var(--bg-card);
@@ -207,13 +208,21 @@ body {
   border-radius: var(--radius);
   padding: 1.25rem;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  transition: background 0.2s, border-color 0.2s,
+    opacity 0.3s ease-out, transform 0.3s ease-out;
   text-decoration: none;
   color: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 260px;
+  opacity: 1;
+  transform: translateY(0);
+}
+.card.card-enter {
+  opacity: 0;
+  transform: translateY(12px);
+  transition-delay: calc(var(--i, 0) * 25ms);
 }
 .card:hover {
   background: var(--bg-card-hover);
@@ -321,6 +330,11 @@ body {
   overflow: auto;
   overflow-x: hidden;
   box-shadow: var(--shadow);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.modal-panel::-webkit-scrollbar {
+  display: none;
 }
 .modal-close-btn {
   position: absolute;
@@ -373,10 +387,44 @@ body {
   image-rendering: -webkit-optimize-contrast;
 }
 .modal-info { min-width: 0; }
+.modal-title-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
 .modal-info h2 {
-  margin: 0 0 0.25rem;
+  margin: 0;
   font-size: 1.5rem;
   text-transform: capitalize;
+}
+.modal-cry-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s, transform 0.15s;
+}
+.modal-cry-btn:hover {
+  color: var(--accent);
+  background: var(--border);
+}
+.modal-cry-btn:active { transform: scale(0.95); }
+.modal-cry-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.modal-cry-btn svg {
+  width: 18px;
+  height: 18px;
 }
 .modal-meta { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem; }
 .modal-section {

@@ -7,6 +7,8 @@
 const POKE_API = 'https://pokeapi.co/api/v2';
 const SPRITE_BASE = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
 
+const CRY_BTN_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+
 // Generation bounds by National Dex number (inclusive)
 const GENERATIONS = [
   { name: 'I', min: 1, max: 151 },
@@ -24,7 +26,10 @@ const state = {
   list: [],      // { name, url, id }[]
   details: new Map(), // id -> full API response
   searchQuery: '',
+  searchDebounceId: null,
 };
+
+const SEARCH_DEBOUNCE_MS = 180;
 
 const el = {
   loading: document.getElementById('loading'),
@@ -129,7 +134,7 @@ function getFilteredList() {
   return state.list.filter(p => p.name.toLowerCase().includes(q));
 }
 
-function renderCard(p) {
+function renderCard(p, index) {
   const id = p.id;
   const mainSprite = spriteUrl(id);
   const officialSprite = spriteUrl(id, 'official');
@@ -137,8 +142,9 @@ function renderCard(p) {
 
   const card = document.createElement('button');
   card.type = 'button';
-  card.className = 'card';
+  card.className = 'card card-enter';
   card.dataset.id = id;
+  card.style.setProperty('--i', String(index));
   card.innerHTML = `
     <span class="card-num">#${id.padStart(3, '0')}</span>
     <div class="card-sprites" id="card-sprites-${id}">
@@ -149,6 +155,12 @@ function renderCard(p) {
     <div class="card-types" id="types-${id}"></div>
   `;
   card.addEventListener('click', () => openDetail(id));
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      card.classList.remove('card-enter');
+    });
+  });
   return card;
 }
 
@@ -176,9 +188,9 @@ function renderGrid() {
   }
 
   el.grid.innerHTML = '';
-  for (const p of filtered) {
-    el.grid.appendChild(renderCard(p));
-  }
+  filtered.forEach((p, index) => {
+    el.grid.appendChild(renderCard(p, index));
+  });
 
   // Optional: lazy-load types for visible cards (batch from API or from cache)
   loadTypesForVisibleCards(filtered.slice(0, 50));
@@ -244,6 +256,10 @@ async function openDetail(id) {
   const abilities = (data.abilities || []).map(a => a.ability?.name).filter(Boolean);
   const moves = (data.moves || []).slice(0, 24).map(m => m.move?.name).filter(Boolean);
   const types = (data.types || []).map(t => t.type?.name).filter(Boolean);
+  const cryUrl = data.cries?.latest || data.cries?.legacy || '';
+  const cryBtn = cryUrl
+    ? `<button type="button" class="modal-cry-btn" data-cry-url="${escapeHtml(cryUrl)}" aria-label="Play Pokémon cry" title="Play cry">${CRY_BTN_SVG}</button>`
+    : '';
 
   el.modalContent.innerHTML = `
     <div class="modal-title-row">
@@ -251,7 +267,10 @@ async function openDetail(id) {
         ${spriteMarkup}
       </div>
       <div class="modal-info">
-        <h2 id="modal-title">${escapeHtml(data.name)}</h2>
+        <div class="modal-title-line">
+          <h2 id="modal-title">${escapeHtml(data.name)}</h2>
+          ${cryBtn}
+        </div>
         <p class="modal-meta">
           #${String(data.id).padStart(3, '0')} · ${getGeneration(data.id)} · ${(data.height || 0) / 10} m · ${(data.weight || 0) / 10} kg
         </p>
@@ -292,9 +311,23 @@ el.modal.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeModal();
 });
 
+el.modalContent.addEventListener('click', (e) => {
+  const btn = e.target.closest('.modal-cry-btn');
+  if (!btn || btn.disabled) return;
+  const url = btn.getAttribute('data-cry-url');
+  if (!url) return;
+  btn.disabled = true;
+  const audio = new Audio(url);
+  audio.play().catch(() => {}).finally(() => { btn.disabled = false; });
+});
+
 el.search.addEventListener('input', () => {
   state.searchQuery = el.search.value;
-  renderGrid();
+  if (state.searchDebounceId) clearTimeout(state.searchDebounceId);
+  state.searchDebounceId = setTimeout(() => {
+    state.searchDebounceId = null;
+    renderGrid();
+  }, SEARCH_DEBOUNCE_MS);
 });
 
 el.search.addEventListener('keydown', (e) => {
