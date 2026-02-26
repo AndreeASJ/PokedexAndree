@@ -10,7 +10,7 @@ module.exports = [
     },
   },
   {
-    files: ["server.js", "test/**/*.js"],
+    files: ["server.js", "test/**/*.js", "scripts/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
@@ -25,7 +25,7 @@ module.exports = [
   },
   {
     files: ["**/*.js"],
-    ignores: ["eslint.config.js", "server.js", "test/**/*.js"],
+    ignores: ["eslint.config.js", "server.js", "test/**/*.js", "scripts/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
